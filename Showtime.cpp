@@ -2,72 +2,96 @@
 #include <iostream>
 #include<bits/stdc++.h>
 using namespace std;
+
+// --- HAM KHOI TAO (CONSTRUCTOR) ---
+// Khoi tao suat chieu voi thong tin phim, thoi gian, gia ve va tao danh sach ghe ngoi
 Showtime::Showtime(const string &id, const Movie &mv,
                    const string &time, double p,
                    int rows, int cols)
     : Entity(id), movie(mv), dateTime(time), price(p) {
+    
+    // Vong lap tao danh sach ghe dua tren so hang (rows) va so cot (cols)
     for (int r = 1; r <= rows; ++r)
         for (int c = 1; c <= cols; ++c)
-            seats.emplace_back(r, c, false); // Tạo ghế tại vị trí (hàng r, cột c)
-            // false = ghế Ban đầu luôn trống
+            // emplace_back giup tao doi tuong Seat va day vao vector ngay lap tuc
+            // false: nghia la trang thai ban dau la ghe TRONG (chua co nguoi)
+            seats.emplace_back(r, c, false); 
 }
 
+// --- COPY CONSTRUCTOR (KHOI TAO SAO CHEP) ---
+// Tao mot suat chieu moi giong het suat chieu cu (other)
 Showtime::Showtime(const Showtime &other)
     : Entity(other), movie(other.movie), dateTime(other.dateTime),
       price(other.price), seats(other.seats) {}
 
+// --- TOAN TU GAN (=) ---
+// Copy du lieu tu suat chieu nay sang suat chieu khac
 Showtime& Showtime::operator=(const Showtime &other) {
-    if (this != &other) { // tránh tự gán chính nó
-        Entity::operator=(other); // gọi operator = lớp cha
-        movie = other.movie; // sao chép toàn bộ thuộc tính (movie, ngày giờ, giá vé, ghế ngồi)
+    if (this != &other) { // Kiem tra de tranh viec tu gan chinh minh (a = a)
+        Entity::operator=(other); // Goi ham gan cua lop cha (Entity) de copy ID
+        
+        // Sao chep toan bo thuoc tinh
+        movie = other.movie; 
         dateTime = other.dateTime;
         price = other.price;
-        seats = other.seats;
+        seats = other.seats; // Copy nguyen ca danh sach ghe
     }
-    return *this; // trả về đối tượng sau khi gán
+    return *this; // Tra ve doi tuong sau khi da gan gia tri
 }
 
 Showtime::~Showtime() {}
 
+// --- KIEM TRA TRANG THAI GHE ---
 bool Showtime::checkSeatAvailable(const string &seatId) const {
-    for (const auto &s : seats) // duyệt toàn bộ ghế
-        if (s.getId() == seatId) // tìm đúng mã ghế
-            return s.isAvailable(); // trả về trngj thái trống hay kh
-	   return false; // kh tìm thấy ghế or đã đặt
+    for (const auto &s : seats) // Duyet qua tat ca cac ghe
+        if (s.getId() == seatId) // Tim thay ghe co ID trung khop
+            return s.isAvailable(); // Tra ve True neu ghe trong, False neu da dat
+            
+    return false; // Tra ve False neu khong tim thay ghe nay trong suat chieu
 }
 
+// --- DAT GHE (KHOA GHE) ---
+// Chuyen trang thai ghe tu TRONG -> DA DAT
 bool Showtime::occupySeat(const string &seatId) {
-    for (auto &s : seats) // duyệt toàn bộ danh sách ghế của suất chiếu
-        if (s.getId() == seatId && s.isAvailable()) { // kiểm tra cùng mã ghế
-            s.occupy(); // đánh dấu ghế đã đặt
-            return true; // đặt thành công
+    for (auto &s : seats) // Duyet qua danh sach ghe (dung & de co the sua doi truc tiep)
+        // Chi dat duoc khi: Tim dung ID va Ghe do phai dang TRONG
+        if (s.getId() == seatId && s.isAvailable()) { 
+            s.occupy(); // Goi ham cua class Seat de doi status thanh false
+            return true; // Bao dat thanh cong
         }
-    return false; // đặt kh thành công
+    return false; // Bao that bai (do ghe khong ton tai hoac da co nguoi dat truoc)
 }
 
+// --- HUY GHE (MO KHOA GHE) ---
+// Chuyen trang thai ghe tu DA DAT -> TRONG (Dung khi khach huy ve)
 bool Showtime::releaseSeat(const string &seatId) { 
     for (auto &s : seats)
-        if (s.getId() == seatId && !s.isAvailable()) { // kiểm tra khác mã ghế
-            s.release(); // trả ghế về trạng thái trống
-            return true; // hủy thành công
+        // Chi huy duoc khi: Tim dung ID va Ghe do dang BI DAT (!isAvailable)
+        if (s.getId() == seatId && !s.isAvailable()) { 
+            s.release(); // Goi ham cua class Seat de doi status thanh true
+            return true; // Bao huy thanh cong
         }
-    return false; // sai nếu ghế không tồn tại hoặc đang trống
+    return false; // Bao that bai (ghe khong ton tai hoac ghe von da trong roi)
 }
 
+// --- THONG KE GHE TRONG ---
 int Showtime::totalAvailableSeats() const {
     int count = 0;
     for (const auto &s : seats)
-        if (s.isAvailable()) ++count; // tăng lượt khi ghế trống
-    return count; // trả về số ghế trống
+        if (s.isAvailable()) ++count; // Dem so luong ghe dang trong
+    return count;
 }
 
-void Showtime::info() const { // in ra màn hình thông tin cơ bản của suất chiếu
+// --- IN THONG TIN ---
+void Showtime::info() const { 
     cout << "Showtime[" << id << "] | Movie: ";
-    movie.info();
+    movie.info(); // Goi ham in thong tin phim
     cout << "Time: " << dateTime
-              << " | Price: " << price
-              << " | Available: " << totalAvailableSeats() << " seats\n";
+         << " | Price: " << price
+         << " | Available: " << totalAvailableSeats() << " seats\n";
 }
+
+// --- CAC HAM GETTER (LAY THONG TIN) ---
 
 Movie Showtime::getMovie() const {
     return movie;
@@ -82,8 +106,10 @@ double Showtime::getPrice() const {
 }
 
 std::vector<Seat> Showtime::getSeats() const {
-    return seats;
+    return seats; // Tra ve toan bo danh sach ghe
 }
+
+// --- CAC HAM SETTER (CAP NHAT THONG TIN) ---
 
 void Showtime::setMovie(const Movie &mv) {
     movie = mv;

@@ -20,22 +20,28 @@
 
 using namespace std;
 
+// Khai bao nguyen mau cac ham xu ly nghiep vu chinh
 void handleStaffAddShowtime(Staff& staff, vector<Showtime>& allShowtimes, const vector<Movie>& allMovies);
-void handleStaffRemoveShowtime(Staff& staff, vector<Showtime>& allShowtimes);
+void void handleStaffRemoveShowtime(Staff& staff, vector<Showtime>& allShowtimes);
 void handleStaffManageShowtime(Staff& staff, vector<Showtime>& allShowtimes);
 void showStaffMenu(Staff& staff, vector<Showtime>& showtimes, vector<Movie>& movies);
 void showCustomerMenu(Customer& customer, Booking& bookingSystem, vector<Showtime>& showtimes);
 
+// --- NHOM HAM TIEN ICH CHUNG ---
+
+// Chuc nang: Xoa man hinh console (Tuy he dieu hanh)
 void clearScreen() {
 #ifdef _WIN32
-    system("cls");
+    system("cls"); // Lenh xoa man hinh cho Windows
 #else
-    system("clear");
+    system("clear"); // Lenh xoa man hinh cho Linux/Mac
 #endif
 }
 
+// Chuc nang: Tam dung chuong trinh. Kho: Phai lam sach bo dem nhap lieu
 void pressEnterToContinue() {
     cout << "\nNhan Enter de tiep tuc...";
+    // Lam sach bo dem nhap lieu truoc
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
     if (cin.fail()) {
         cin.clear();
@@ -43,34 +49,44 @@ void pressEnterToContinue() {
     }
 }
 
+// Chuc nang: Nhan lua chon so tu menu. Kho: Kiem tra va bat loi nhap ky tu/chu
 int getMenuChoice() {
     int choice;
     cout << "\n> Nhap lua chon: ";
-    while (!(cin >> choice)) {
+    // Vong lap bat loi: neu nhap khong phai so thi nhap lai
+    while (!(cin >> choice)) { 
         cout << "[!] Nhap lai so: ";
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    // Lam sach ky tu \n sau khi nhap
+    cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
     return choice;
 }
 
+// Chuc nang: Nhan du lieu dang chuoi co chua khoang trang
 string getStringInput(string prompt) {
     string input;
     cout << prompt;
-    if (cin.peek() == '\n') cin.ignore();
+    // Neu bo dem con ky tu \n thi bo qua
+    if (cin.peek() == '\n') cin.ignore(); 
     getline(cin, input);
     return input;
 }
 
+// Chuc nang: Tach mot dong chuoi CSV thanh cac phan tu trong Vector
 vector<string> parseCSVLine(const string& line) {
     vector<string> result;
-    stringstream ss(line);
+    // Su dung Stringstream de tach chuoi bang dau phay
+    stringstream ss(line); 
     string item;
     while (getline(ss, item, ',')) result.push_back(item);
     return result;
 }
 
+// --- NHOM HAM TAI VA LUU DU LIEU (I/O) ---
+
+// Chuc nang: Tai du lieu Phim tu movies.csv
 void loadMovies(vector<Movie>& movies) {
     ifstream file("movies.csv");
     if (!file.is_open()) return;
@@ -79,14 +95,16 @@ void loadMovies(vector<Movie>& movies) {
         if (line.empty()) continue;
         vector<string> data = parseCSVLine(line);
         if (data.size() >= 6) {
-            try {
+            /* Kho: Su dung try-catch de bat loi dinh dang du lieu (VD: chu thay vi so) */
+            try { 
                 movies.emplace_back(data[0], data[1], data[2], stoi(data[3]), stod(data[4]), data[5]);
-            } catch (...) { continue; }
+            } catch (...) { continue; } // Neu loi thi bo qua dong nay
         }
     }
     file.close();
 }
 
+// Chuc nang: Tai du lieu Khach hang tu customers.csv
 void loadCustomers(vector<Customer>& customers) {
     ifstream file("customers.csv");
     if (!file.is_open()) return;
@@ -101,8 +119,10 @@ void loadCustomers(vector<Customer>& customers) {
     file.close();
 }
 
+// Chuc nang: Luu du lieu Khach hang ra file customers.csv
 void saveCustomers(const vector<Customer>& customers) {
-    ofstream file("customers.csv", ios::trunc);
+    /* Kho: ios::trunc dam bao xoa toan bo noi dung cu truoc khi ghi moi */
+    ofstream file("customers.csv", ios::trunc); 
     if (!file.is_open()) return;
     for (const auto& c : customers) {
         file << c.getId() << "," << c.getName() << "," << c.getEmail() << "," << c.getPhone() << endl;
@@ -110,6 +130,7 @@ void saveCustomers(const vector<Customer>& customers) {
     file.close();
 }
 
+// Chuc nang: Tai du lieu Nhan vien tu staff.csv
 void loadStaff(vector<Staff>& staff) {
     ifstream file("staff.csv");
     if (!file.is_open()) return;
@@ -124,6 +145,7 @@ void loadStaff(vector<Staff>& staff) {
     file.close();
 }
 
+// Chuc nang: Tai du lieu Suat chieu tu showtimes.csv
 void loadShowtimes(vector<Showtime>& showtimes, const vector<Movie>& movies) {
     ifstream file("showtimes.csv");
     if (!file.is_open()) return;
@@ -140,6 +162,7 @@ void loadShowtimes(vector<Showtime>& showtimes, const vector<Movie>& movies) {
 
             Movie selectedMovie("Unknown", "Unknown", "Unknown", 0, 0.0, "");
             bool found = false;
+            /* Kho: Lien ket du lieu - Phai tim doi tuong Movie tuong ung voi movieID */
             for (const auto& m : movies) {
                 if (m.getId() == movieID) {
                     selectedMovie = m;
@@ -147,21 +170,28 @@ void loadShowtimes(vector<Showtime>& showtimes, const vector<Movie>& movies) {
                     break;
                 }
             }
+            // Chi tao Showtime neu tim thay Movie lien ket
             if (found) showtimes.emplace_back(showID, selectedMovie, time, price, 5, 8);
         }
     }
     file.close();
 }
 
+// Chuc nang: Luu du lieu Suat chieu ra file showtimes.csv
 void saveShowtimes(const vector<Showtime>& showtimes) {
     ofstream file("showtimes.csv", ios::trunc);
     if (!file.is_open()) return;
     for (const auto& s : showtimes) {
+        // Luu lai thong tin can thiet (ID, MovieID, Time, Price)
         file << s.getId() << "," << s.getMovie().getId() << "," << s.getDateTime() << "," << (long)s.getPrice() << endl;
     }
     file.close();
 }
 
+// --- NHOM HAM DANG NHAP / DANG KY ---
+
+// Chuc nang: Hien thi va chon tai khoan Khach hang. 
+// Kho: Tra ve con tro (&) den doi tuong goc trong vector
 Customer* selectCustomerAccount(vector<Customer>& customers) {
     clearScreen();
     cout << "=== CHON TAI KHOAN KHACH HANG ===\n";
@@ -169,6 +199,7 @@ Customer* selectCustomerAccount(vector<Customer>& customers) {
         cout << "Chua co tai khoan. Vui long Dang ky.\n";
         return nullptr;
     }
+    // Hien thi danh sach khach hang de lua chon
     cout << left << setw(5) << "STT" << setw(10) << "ID" << setw(25) << "TEN KHACH HANG" << endl;
     cout << "----------------------------------------\n";
     for (size_t i = 0; i < customers.size(); ++i) {
@@ -180,11 +211,13 @@ Customer* selectCustomerAccount(vector<Customer>& customers) {
     cout << "0. Quay lai\n";
     int choice = getMenuChoice();
     if (choice == 0) return nullptr;
-    if (choice > 0 && choice <= (int)customers.size()) return &customers[choice - 1];
+    // Tra ve dia chi (&) cua Customer duoc chon
+    if (choice > 0 && choice <= (int)customers.size()) return &customers[choice - 1]; 
     cout << "[!] Lua chon khong hop le.\n"; pressEnterToContinue();
     return nullptr;
 }
 
+// Chuc nang: Hien thi va chon tai khoan Nhan vien. 
 Staff* selectStaffAccount(vector<Staff>& staffList) {
     clearScreen();
     cout << "=== DANG NHAP HE THONG NHAN VIEN ===\n";
@@ -193,10 +226,11 @@ Staff* selectStaffAccount(vector<Staff>& staffList) {
         return nullptr;
     }
 
+    // Hien thi danh sach nhan vien
     cout << left << setw(5) << "STT" 
-         << setw(10) << "ID" 
-         << setw(25) << "TEN NHAN VIEN" 
-         << setw(15) << "CHUC VU" << endl;
+          << setw(10) << "ID" 
+          << setw(25) << "TEN NHAN VIEN" 
+          << setw(15) << "CHUC VU" << endl;
 
     cout << "-------------------------------------------------------\n";
     
@@ -213,6 +247,7 @@ Staff* selectStaffAccount(vector<Staff>& staffList) {
     int choice = getMenuChoice();
     if (choice == 0) return nullptr;
     
+    // Tra ve dia chi (&) cua Staff duoc chon
     if (choice > 0 && choice <= (int)staffList.size()) {
         return &staffList[choice - 1];
     }
@@ -221,48 +256,63 @@ Staff* selectStaffAccount(vector<Staff>& staffList) {
     return nullptr;
 }
 
+// Chuc nang: Dang ky tai khoan khach hang moi
 void handleRegister(vector<Customer>& allCustomers) {
     clearScreen();
     cout << "=== DANG KY TAI KHOAN ===\n";
     string name = getStringInput("Ho ten: ");
     string email = getStringInput("Email: ");
     string phone = getStringInput("SDT: ");
-    string newId = "C" + to_string(allCustomers.size() + 101);
+    // Tao ID moi dua tren kich thuoc hien tai cua vector
+    string newId = "C" + to_string(allCustomers.size() + 101); 
     allCustomers.emplace_back(newId, name, email, phone);
-    saveCustomers(allCustomers);
+    saveCustomers(allCustomers); // Luu vao file
     cout << "\nDang ky thanh cong! ID: " << newId << "\n";
     pressEnterToContinue();
 }
 
+// --- NHOM HAM XU LY NGHIEP VU CHINH (CUSTOMER) ---
+
+// Chuc nang: Quy trinh dat ve hoan chinh
 void handleCustomerBooking(Customer& customer, Booking& bookingSystem, vector<Showtime>& showtimes) {
     clearScreen();
     cout << "--- DAT VE ---\n";
     if (showtimes.empty()) { cout << "Trong.\n"; pressEnterToContinue(); return; }
+    // Hien thi danh sach suat chieu
     for (size_t i = 0; i < showtimes.size(); ++i) {
         cout << "[" << (i + 1) << "] " << showtimes[i].getMovie().getTitle() << " - " << showtimes[i].getDateTime() << endl;
     }
     int choice = getMenuChoice();
     if (choice <= 0 || choice > (int)showtimes.size()) return;
 
-    Showtime& selectedShow = showtimes[choice - 1];
+    Showtime& selectedShow = showtimes[choice - 1]; // Lay suat chieu tham chieu (&)
+    // Hien thi so do ghe
     BookingAlgorithm::displayAvailableSeats(selectedShow);
     string seatId = getStringInput("> Chon ghe (vd: A5): ");
 
+    // Goi ham xu ly dat ghe (chua cac buoc kiem tra/khoa ghe/tao ve)
     if (BookingAlgorithm::bookSeat(selectedShow, bookingSystem, seatId, selectedShow.getPrice())) {
-        string newTicketId = "T" + to_string(bookingSystem.getTickets().size());
+        // Tao ID ve moi (Dua tren so luong ve hien tai trong BookingSystem)
+        string newTicketId = "T" + to_string(bookingSystem.getTickets().size()); 
+        
+        // Tim ve vua duoc tao ra de lay dia chi con tro
         Ticket* t = bookingSystem.findTicket(newTicketId);
         if (t) {
-            customer.addTicketToHistory(*t);
+            // Luu ve vao lich su ca nhan cua khach hang nay
+            customer.addTicketToHistory(*t); 
             cout << "Dat ve thanh cong!\n";
         }
     }
     pressEnterToContinue();
 }
 
+// Chuc nang: Huy ve
+// Kho: Ep kieu const_cast de sua doi lich su dat ve cua khach hang
 void handleCustomerCancel(Customer& customer, Booking& bookingSystem, vector<Showtime>& showtimes) {
     clearScreen();
     cout << "--- HUY VE ---\n";
-    vector<Ticket>& myHistory = const_cast<vector<Ticket>&>(customer.getBookingHistory());
+    // const_cast cho phep lay ve tham chieu co the sua doi tu ham const
+    vector<Ticket>& myHistory = const_cast<vector<Ticket>&>(customer.getBookingHistory()); 
 
     if (myHistory.empty()) {
         cout << "Lich su trong.\n";
@@ -271,7 +321,7 @@ void handleCustomerCancel(Customer& customer, Booking& bookingSystem, vector<Sho
     }
 
     cout << "DANH SACH VE:\n";
-    for (const auto& t : myHistory) t.info();
+    for (const auto& t : myHistory) t.info(); // Hien thi lich su ve
     cout << "----------------\n";
 
     string tId = getStringInput("> Nhap MA VE muon huy: ");
@@ -283,8 +333,9 @@ void handleCustomerCancel(Customer& customer, Booking& bookingSystem, vector<Sho
             if (ticket.getStatus() == TicketStatus::CANCELED) {
                 cout << "[!] Ve nay da duoc huy truoc do.\n";
             } else {
-                ticket.cancel(); 
-                if (ticket.getShowtime()) cout << "-> Da gui yeu cau tra ghe ve he thong.\n";
+                ticket.cancel(); // Goi ham huy (soft delete)
+                // Logic tra ghe ve he thong can duoc code ben trong ham ticket.cancel()
+                if (ticket.getShowtime()) cout << "-> Da gui yeu cau tra ghe ve he thong.\n"; 
             }
             break;
         }
@@ -293,9 +344,10 @@ void handleCustomerCancel(Customer& customer, Booking& bookingSystem, vector<Sho
     pressEnterToContinue();
 }
 
+// Chuc nang: Hien thi menu va dieu phoi chuc nang cho Khach hang
 void showCustomerMenu(Customer& customer, Booking& bookingSystem, vector<Showtime>& showtimes) {
     bool running = true;
-    while (running) {
+    while (running) { // Vong lap chay menu
         clearScreen();
         cout << "--- HI, " << customer.getName() << " ---\n";
         cout << "1. Dat ve\n";
@@ -312,15 +364,17 @@ void showCustomerMenu(Customer& customer, Booking& bookingSystem, vector<Showtim
                 else for(const auto& t : customer.getBookingHistory()) t.printTicket();
                 pressEnterToContinue(); 
                 break;
-            case 0: running = false; break;
+            case 0: running = false; break; // Thoat vong lap de Dang xuat
         }
     }
 }
 
+// Chuc nang: Them suat chieu moi vao vector toan cuc
 void handleStaffAddShowtime(Staff& staff, vector<Showtime>& allShowtimes, const vector<Movie>& allMovies) {
     clearScreen();
     cout << "--- THEM SUAT CHIEU ---\n";
     if (allMovies.empty()) { cout << "Chua co phim.\n"; pressEnterToContinue(); return; }
+    // Chon Phim
     for (size_t i = 0; i < allMovies.size(); ++i) 
         cout << "[" << (i + 1) << "] " << allMovies[i].getTitle() << endl;
     
@@ -328,19 +382,21 @@ void handleStaffAddShowtime(Staff& staff, vector<Showtime>& allShowtimes, const 
     if (mc <= 0 || mc > (int)allMovies.size()) return;
     
     const Movie& movie = allMovies[mc - 1];
-    string showId = "S" + to_string(allShowtimes.size() + 101);
+    string showId = "S" + to_string(allShowtimes.size() + 101); // Tao ID moi
     string time = getStringInput("Thoi gian (DD/MM/YYYY HH:MM): ");
     double price = 0;
     cout << "Gia ve: "; cin >> price; cin.ignore();
 
     Showtime newShow(showId, movie, time, price, 5, 8);
-    staff.addShowtime(newShow);
-    allShowtimes.push_back(newShow);
-    saveShowtimes(allShowtimes);
+    staff.addShowtime(newShow); // [Ghi chu: Ham nay nen duoc xoa bo vi thua, xem phan tich truoc]
+    allShowtimes.push_back(newShow); // Them vao vector toan cuc
+    saveShowtimes(allShowtimes); // Luu ra file
     cout << "Da them suat chieu moi!\n";
     pressEnterToContinue();
 }
 
+// Chuc nang: Xoa suat chieu khoi vector toan cuc
+// Kho: Phai dung Iterator de xoa phan tu va dung lenh saveShowtimes de luu lai thay doi vao file
 void handleStaffRemoveShowtime(Staff& staff, vector<Showtime>& allShowtimes) {
     clearScreen();
     cout << "--- XOA SUAT CHIEU ---\n";
@@ -354,12 +410,13 @@ void handleStaffRemoveShowtime(Staff& staff, vector<Showtime>& allShowtimes) {
 
     string id = getStringInput("> Nhap ID can xoa: ");
     bool found = false;
+    // Kho: Vong lap dung Iterator de xoa phan tu
     for (auto it = allShowtimes.begin(); it != allShowtimes.end(); ++it) {
         if (it->getId() == id) {
             string time = it->getDateTime();
-            allShowtimes.erase(it);
-            staff.removeShowtime(time);
-            saveShowtimes(allShowtimes); 
+            allShowtimes.erase(it); // Xoa khoi vector toan cuc
+            staff.removeShowtime(time); // [Ghi chu: Ham nay nen duoc xoa bo vi thua]
+            saveShowtimes(allShowtimes); // Cap nhat vao file
             cout << "Da xoa thanh cong.\n";
             found = true;
             break;
@@ -369,6 +426,8 @@ void handleStaffRemoveShowtime(Staff& staff, vector<Showtime>& allShowtimes) {
     pressEnterToContinue();
 }
 
+// Chuc nang: Sua thong tin Gio chieu va Gia ve
+// Kho: Su dung con tro/tham chieu de tim va sua truc tiep doi tuong goc trong vector
 void handleStaffManageShowtime(Staff& staff, vector<Showtime>& allShowtimes) {
     clearScreen();
     cout << "--- SUA SUAT CHIEU ---\n";
@@ -381,6 +440,7 @@ void handleStaffManageShowtime(Staff& staff, vector<Showtime>& allShowtimes) {
 
     string id = getStringInput("> Nhap ID can sua: ");
     Showtime* target = nullptr;
+    // Tim dia chi (con tro) cua doi tuong Showtime muon sua
     for (auto& s : allShowtimes) if (s.getId() == id) { target = &s; break; }
 
     if (!target) { cout << "Khong tim thay.\n"; pressEnterToContinue(); return; }
@@ -392,19 +452,22 @@ void handleStaffManageShowtime(Staff& staff, vector<Showtime>& allShowtimes) {
     cout << "Gia cu: " << (long)target->getPrice() << endl;
     string newPriceStr = getStringInput("Gia moi (Enter de giu nguyen): ");
     double newPrice = target->getPrice();
-    if (!newPriceStr.empty()) {
+    // Kho: Kiem tra va chuyen doi chuoi gia moi thanh so (double)
+    if (!newPriceStr.empty()) { 
         try { newPrice = stod(newPriceStr); } catch(...) {}
     }
 
-    staff.manageShowtime(*target, newTime, newPrice);
+    // Goi ham manageShowtime cua staff, truyen doi tuong goc de sua
+    staff.manageShowtime(*target, newTime, newPrice); 
     saveShowtimes(allShowtimes); 
     cout << "Cap nhat thanh cong!\n";
     pressEnterToContinue();
 }
 
+// Chuc nang: Hien thi menu va dieu phoi chuc nang cho Nhan vien
 void showStaffMenu(Staff& staff, vector<Showtime>& showtimes, vector<Movie>& movies) {
     bool running = true;
-    while (running) {
+    while (running) { // Vong lap chay menu
         clearScreen();
         cout << "--- MENU NHAN VIEN: " << staff.getName() << " (" << staff.getRole() << ") ---\n";
         cout << "1. Them suat chieu\n";
@@ -419,25 +482,28 @@ void showStaffMenu(Staff& staff, vector<Showtime>& showtimes, vector<Movie>& mov
             case 2: handleStaffRemoveShowtime(staff, showtimes); break;
             case 3: handleStaffManageShowtime(staff, showtimes); break;
             case 4: clearScreen(); staff.info(); pressEnterToContinue(); break;
-            case 0: running = false; break;
+            case 0: running = false; break; // Thoat vong lap de Dang xuat
         }
     }
 }
 
+// Chuc nang: Diem bat dau. Thuc hien tai du lieu ban dau va quan ly cac vong lap menu lon
 int main() {
-    Booking bookingSystem;
-    vector<Movie> allMovies;
+    Booking bookingSystem; // Khoi tao he thong quan ly ve
+    vector<Movie> allMovies; // Cac vector luu tru du lieu toan cuc
     vector<Showtime> allShowtimes;
     vector<Customer> allCustomers;
     vector<Staff> allStaff;
 
+    // Tai du lieu tu CSV vao vector
     loadMovies(allMovies);
     loadCustomers(allCustomers);
     loadStaff(allStaff);
-    loadShowtimes(allShowtimes, allMovies);
+    // Kho: Tai suat chieu sau cung vi can du lieu Movie
+    loadShowtimes(allShowtimes, allMovies); 
 
     bool appRunning = true;
-    while (appRunning) {
+    while (appRunning) { // Vong lap menu chinh
         clearScreen();
         cout << "=== HE THONG DAT VE ===\n";
         cout << "1. Dang nhap (Khach hang)\n";
@@ -447,18 +513,18 @@ int main() {
 
         int choice = getMenuChoice();
         switch (choice) {
-            case 1: {
+            case 1: { // Dang nhap Khach hang
                 Customer* u = selectCustomerAccount(allCustomers);
-                if (u) showCustomerMenu(*u, bookingSystem, allShowtimes);
+                if (u) showCustomerMenu(*u, bookingSystem, allShowtimes); // Vao menu Khach hang
                 break;
             }
-            case 2: {
+            case 2: { // Dang nhap Nhan vien
                 Staff* s = selectStaffAccount(allStaff);
-                if (s) showStaffMenu(*s, allShowtimes, allMovies);
+                if (s) showStaffMenu(*s, allShowtimes, allMovies); // Vao menu Nhan vien
                 break;
             }
-            case 3: handleRegister(allCustomers); break;
-            case 0: appRunning = false; break;
+            case 3: handleRegister(allCustomers); break; // Dang ky
+            case 0: appRunning = false; break; // Thoat ung dung
         }
     }
     return 0;
